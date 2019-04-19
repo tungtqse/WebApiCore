@@ -6,6 +6,10 @@ namespace WebApiCore.Common
     {
         public const string ConnectionString = "DefaultConnection";
         public const int MaximumItem = 100;
+        public const int Salt = 16;
+        public const int Hash = 20;
+        public const int PasswordHash = 36;
+        public const int AccessFailedCount = 3;
 
         public class BaseProperty
         {

@@ -11,5 +11,6 @@ namespace WebApiCore.DataAccess.UnitOfWork
         int SaveChanges();
         Task<int> SaveChangeAsyncs();
         IDbRepository<T> Repository<T>() where T : class;
+        UnitOfWork Create();
     }
 }

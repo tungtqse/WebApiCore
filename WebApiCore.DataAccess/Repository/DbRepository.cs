@@ -20,10 +20,9 @@ namespace WebApiCore.DataAccess.Repository
 
         public DbRepository(DbSet<T> entities)
         {
-            if (entities == null) throw new ArgumentNullException("dbSet");
-            this.entities = entities;
-            this.dbSetIQueryable = entities as IQueryable<T>;
-            this.entityType = typeof(T);            
+            this.entities = entities ?? throw new ArgumentNullException("dbSet");
+            dbSetIQueryable = entities as IQueryable<T>;
+            entityType = typeof(T);            
         }
 
 

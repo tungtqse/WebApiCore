@@ -70,7 +70,7 @@ namespace WebApiCore.DataAccess.UnitOfWork
 
         public void Dispose()
         {
-            dbContext.Dispose();
+            //dbContext.Dispose();
         }        
 
         public Task<int> SaveChangeAsyncs()
@@ -119,7 +119,7 @@ namespace WebApiCore.DataAccess.UnitOfWork
 
                 foreach (var entry in entries)
                 {
-                    type = entry.GetType();
+                    type = entry.Entity.GetType();
                     var entityName = type.Name;
 
                     if (entry.State == EntityState.Modified)
@@ -178,7 +178,7 @@ namespace WebApiCore.DataAccess.UnitOfWork
                     {
                         #region Set status as active/inactive
                         var status = type.GetProperty(Constant.BaseProperty.StatusId).GetValue(entry.Entity, null);
-                        if (status == null)
+                        if (status == null || status.Equals(false))
                             type.GetProperty(Constant.BaseProperty.StatusId).SetValue(entry.Entity, true, null);
                         list.Add(entry);
                         #endregion
@@ -258,6 +258,12 @@ namespace WebApiCore.DataAccess.UnitOfWork
             }
 
             #endregion
+        }
+
+        public virtual UnitOfWork Create()
+        {
+            var ctx = Activator.CreateInstance(typeof(MainContext)) as MainContext;
+            return Activator.CreateInstance(typeof(UnitOfWork), ctx) as UnitOfWork;
         }
     }
 }

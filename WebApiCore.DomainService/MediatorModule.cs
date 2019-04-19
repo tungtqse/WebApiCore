@@ -2,7 +2,7 @@
 
 namespace WebApiCore.DomainService
 {
-    public class Class1
+    public class MediatorModule
     {
     }
 }

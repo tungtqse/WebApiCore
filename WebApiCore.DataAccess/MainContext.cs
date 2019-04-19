@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EntityFramework.DbContextScope.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
@@ -6,11 +7,21 @@ using WebApiCore.DataModel.Models;
 
 namespace WebApiCore.DataAccess
 {
-    public partial class MainContext : DbContext
+    public class ApplicationDbContextOptions
+    {
+        public readonly DbContextOptions<MainContext> Options;
+
+        public ApplicationDbContextOptions(DbContextOptions<MainContext> options)
+        {
+            Options = options;
+        }
+    }
+
+    public partial class MainContext : DbContext, IDbContext
     {
         public MainContext() { }
 
-        public MainContext(DbContextOptions<MainContext> options) : base(options) { }
+        public MainContext(ApplicationDbContextOptions options) : base(options.Options) { }
 
         public virtual DbSet<AuditTrail> AuditTrails { get; set; }
         public virtual DbSet<AttachmentFile> AttachmentFiles { get; set; }
@@ -30,6 +41,9 @@ namespace WebApiCore.DataAccess
         public virtual DbSet<Comment> Comments { get; set; }
         public virtual DbSet<MappingUserComment> MappingUserComments { get; set; }
         public virtual DbSet<SourceLink> SourceLinks { get; set; }
+        public virtual DbSet<UserCredential> UserCredentials { get; set; }
+        public virtual DbSet<Role> Roles { get; set; }
+        public virtual DbSet<MappingUserRole> MappingUserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,7 +53,7 @@ namespace WebApiCore.DataAccess
                 entityType.Relational().TableName = entityType.DisplayName();
             }
 
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder);            
 
             modelBuilder.ApplyConfiguration(new MappingAlbumIdolConfiguration());
             modelBuilder.ApplyConfiguration(new MappingAlbumImageConfiguration());
@@ -53,6 +67,9 @@ namespace WebApiCore.DataAccess
             modelBuilder.ApplyConfiguration(new SourceLinkConfiguration());
             modelBuilder.ApplyConfiguration(new MappingUserCommentConfiguration());
             modelBuilder.ApplyConfiguration(new UserProfileConfiguration());
-        }      
+            modelBuilder.ApplyConfiguration(new UserCredentialConfiguration());
+            modelBuilder.ApplyConfiguration(new RoleConfiguration());
+            modelBuilder.ApplyConfiguration(new MappingUserRoleConfiguration());
+        }
     }
 }

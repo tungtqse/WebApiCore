@@ -172,5 +172,38 @@ namespace WebApiCore.DataAccess
                 builder.Property(p => p.Email).HasMaxLength(200);
             }
         }
+
+        public class UserCredentialConfiguration : IEntityTypeConfiguration<UserCredential>
+        {
+            public void Configure(EntityTypeBuilder<UserCredential> builder)
+            {
+                builder.Property(p => p.UserName).HasMaxLength(50);
+                builder.Property(p => p.Password).HasMaxLength(500);
+                builder.Property(p => p.SecurityStamp).HasMaxLength(500);
+            }
+        }
+
+        public class RoleConfiguration : IEntityTypeConfiguration<Role>
+        {
+            public void Configure(EntityTypeBuilder<Role> builder)
+            {
+                builder.Property(p => p.Name).HasMaxLength(100);
+            }
+        }
+
+        public class MappingUserRoleConfiguration : IEntityTypeConfiguration<MappingUserRole>
+        {
+            public void Configure(EntityTypeBuilder<MappingUserRole> builder)
+            {
+                builder.HasKey(c => new { c.UserCredentialId, c.RoleId });
+                builder.HasOne<UserCredential>(a => a.UserCredential)
+                        .WithMany(i => i.UserRoles)
+                        .HasForeignKey(sc => sc.UserCredentialId);
+                builder.HasOne<Role>(a => a.Role)
+                        .WithMany(i => i.UserRoles)
+                        .HasForeignKey(sc => sc.RoleId);
+
+            }
+        }
     }
 }

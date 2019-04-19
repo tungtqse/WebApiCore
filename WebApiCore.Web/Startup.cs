@@ -34,7 +34,7 @@ namespace WebApiCore.Web
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddDbContext<MainContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), builder => builder.MigrationsAssembly(typeof(Startup).Assembly.FullName)));
-            services.AddScoped(typeof(IDbRepository<>), typeof(DbRepository<>));
+            services.AddTransient(typeof(IDbRepository<>), typeof(DbRepository<>));
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
             // register MediatR Handler
