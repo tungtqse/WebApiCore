@@ -17,6 +17,9 @@ using NetCore.AutoRegisterDi;
 using WebApiCore.DataAccess;
 using WebApiCore.DataAccess.Repository;
 using WebApiCore.DataAccess.UnitOfWork;
+using WebApiCore.DataAccess.DbScopeFactory;
+using EntityFramework.DbContextScope;
+using EntityFramework.DbContextScope.Interfaces;
 
 namespace WebApiCore.Web
 {
@@ -34,9 +37,13 @@ namespace WebApiCore.Web
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddDbContext<MainContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), builder => builder.MigrationsAssembly(typeof(Startup).Assembly.FullName)));
-            services.AddTransient(typeof(IDbRepository<>), typeof(DbRepository<>));
-            services.AddTransient<IUnitOfWork, UnitOfWork>();
+            //services.AddTransient(typeof(IDbRepository<>), typeof(DbRepository<>));
+            //services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
+            services.AddScoped(typeof(ApplicationDbContextOptions));
+            services.AddTransient(typeof(IDbContextFactory),typeof(DbContextFactory));
+            services.AddTransient(typeof(IDbContextScopeFactory), typeof(DbContextScopeFactory));
+
             // register MediatR Handler
             MediatorConfig(services, typeof(ApplicationAPI.APIs.CategoryAPI.SearchApi.QueryHandler));
         }

@@ -17,10 +17,8 @@ namespace WebApiCore.DataAccess
         }
     }
 
-    public partial class MainContext : DbContext, IDbContext
+    public partial class MainContext : AuditDbContext
     {
-        public MainContext() { }
-
         public MainContext(ApplicationDbContextOptions options) : base(options.Options) { }
 
         public virtual DbSet<AuditTrail> AuditTrails { get; set; }
