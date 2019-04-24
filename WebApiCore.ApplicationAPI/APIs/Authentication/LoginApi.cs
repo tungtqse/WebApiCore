@@ -1,10 +1,13 @@
-﻿using MediatR;
+﻿using EntityFramework.DbContextScope.Interfaces;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WebApiCore.DataAccess;
 using WebApiCore.DataAccess.UnitOfWork;
 using WebApiCore.DataModel.Models;
 using WebApiCore.DataTransferObject;
@@ -15,7 +18,7 @@ namespace WebApiCore.ApplicationAPI.APIs.Authentication
     public class LoginApi
     {
         public class Query : IRequest<Result>
-        {
+        {            
             public string UserName { get; set; }
             public string Password { get; set; }
         }
@@ -30,16 +33,18 @@ namespace WebApiCore.ApplicationAPI.APIs.Authentication
             public int Code { get; set; }
             public bool IsSuccessful { get; set; }
             public List<string> Messages { get; set; }
+            public string Email { get; set; }
+            public Guid Id { get; set; }
         }
 
         public class QueryHandler : IRequestHandler<Query, Result>
         {
-            private readonly IUnitOfWork _unitOfWork;
+            private readonly IDbContextScopeFactory _scopeFactory;
             private readonly IMediator _mediator;
 
-            public QueryHandler(IUnitOfWork unitOfWork, IMediator mediator)
+            public QueryHandler(IDbContextScopeFactory scopeFactory, IMediator mediator)
             {
-                _unitOfWork = unitOfWork;
+                _scopeFactory = scopeFactory;
                 _mediator = mediator;
             }
 
@@ -47,11 +52,12 @@ namespace WebApiCore.ApplicationAPI.APIs.Authentication
             {
                 var result = new Result();
 
-                using (var unit = _unitOfWork)
+                using (var scope = _scopeFactory.Create())
                 {
+                    var context = scope.DbContexts.Get<MainContext>();
                     var user =
-                        unit.Repository<UserCredential>()
-                            .Where(w => w.StatusId == true && w.UserName.Equals(message.UserName, StringComparison.OrdinalIgnoreCase))
+                        context.Set<UserCredential>().Include(i=>i.UserProfile)
+                            .Where(w => w.StatusId == true && w.UserName.Equals(message.UserName, StringComparison.OrdinalIgnoreCase))                            
                             .FirstOrDefault();
 
                     if(user != null)
@@ -60,8 +66,13 @@ namespace WebApiCore.ApplicationAPI.APIs.Authentication
 
                         if (!isValid)
                         {
-                            result.Messages.Add("Password is incorrect");
+                            result.Messages.Add("Password is incorrect");                            
                             //await _mediator.Send(new LockUserApi.Command() { UserId = user.Id });
+                        }
+                        else
+                        {
+                            result.Email = user.UserProfile.Email;
+                            result.Id = user.Id;
                         }
 
                         result.IsSuccessful = isValid;

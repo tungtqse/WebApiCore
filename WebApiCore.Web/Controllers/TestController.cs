@@ -8,9 +8,13 @@ using WebApiCore.DataAccess.UnitOfWork;
 using WebApiCore.DataModel.Models;
 using System.Linq.Expressions;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApiCore.Web.Controllers
 {
+    [Authorize]
+    //[Authorize(AuthenticationSchemes = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)]
+    //[Authorize("Bearer")]
     [Route("api/[controller]")]
     [ApiController]
     public class TestController : ControllerBase
@@ -33,6 +37,11 @@ namespace WebApiCore.Web.Controllers
             };
 
             var result = await _mediator.Send(query);
+
+            result.SearchResultItems.Add(new ApplicationAPI.APIs.CategoryAPI.SearchApi.NestedModel.CategoryModel()
+            {
+                Name = "Test"
+            });
 
             return Ok(result);
         }

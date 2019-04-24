@@ -1,11 +1,10 @@
-﻿using MediatR;
-using System;
+﻿using EntityFramework.DbContextScope.Interfaces;
+using MediatR;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WebApiCore.DataAccess.UnitOfWork;
+using WebApiCore.DataAccess;
 using WebApiCore.DataTransferObject;
 
 namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
@@ -41,19 +40,21 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
         public class QueryHandler : IRequestHandler<Query, Result>
         {
-            private readonly IUnitOfWork _unitOfWork;
+            private readonly IDbContextScopeFactory _scopeFactory;
 
-            public QueryHandler(IUnitOfWork unitOfWork)
+            public QueryHandler(IDbContextScopeFactory scopeFactory)
             {
-                _unitOfWork = unitOfWork;
+                _scopeFactory = scopeFactory;
             }           
 
             public Task<Result> Handle(Query message, CancellationToken cancellationToken)
             {
-                using (var unit = _unitOfWork)
+                using (var scope = _scopeFactory.CreateReadOnly())
                 {
+                    var context = scope.DbContexts.Get<MainContext>();
+
                     var query =
-                        unit.Repository<DataModel.Models.Category>()
+                        context.Set<DataModel.Models.Category>()
                             .Where(w => w.StatusId == true);
 
                     if (!string.IsNullOrEmpty(message.Name))
