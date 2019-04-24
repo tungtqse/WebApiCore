@@ -2,20 +2,19 @@
 using MediatR;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApiCore.DataAccess;
+using WebApiCore.DataModel.Models;
 using WebApiCore.DataTransferObject;
 
-namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
+namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 {
-    public class UpdateApi
+    public class CreateApi
     {
         public class Command : IRequest<CommandResponse>
         {
-            public Guid Id { get; set; }
             public string Name { get; set; }
         }
 
@@ -64,20 +63,14 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                         {
                             var context = scope.DbContexts.Get<MainContext>();
 
-                            
-                            isValid = context.Set<DataModel.Models.Category>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
+                            var blood = new Blood()
+                            {
+                                Name = message.Name
+                            };
 
-                            if (!isValid)
-                            {
-                                var category = context.Set<DataModel.Models.Category>().Where(f => f.Id == message.Id).FirstOrDefault();
-                                category.Name = message.Name;
-                                isValid = true;
-                                context.SaveChanges();
-                            }
-                            else
-                            {
-                                result.Messages.Add("Name is existed");
-                            }                            
+                            context.Set<Blood>().Add(blood);
+
+                            context.SaveChanges();
                         }
                     }
                     catch (Exception ex)

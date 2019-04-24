@@ -3,23 +3,25 @@ using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApiCore.DataAccess;
+using WebApiCore.DataModel.Models;
 using WebApiCore.DataTransferObject;
 
-namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
+namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 {
-    public class SearchApi 
+    public class SearchApi
     {
         public class Query : PagingModel, IRequest<Result>
         {
             public string Name { get; set; }
         }
 
-        public class Result : ISearchResult<NestedModel.CategoryModel>, IWebApiResponse
+        public class Result : ISearchResult<NestedModel.BloodModel>, IWebApiResponse
         {
-            public IList<NestedModel.CategoryModel> SearchResultItems { get; set; }
+            public IList<NestedModel.BloodModel> SearchResultItems { get; set; }
             public int Count { get; set; }
             public Result()
             {
@@ -33,7 +35,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
         public class NestedModel
         {
-            public class CategoryModel
+            public class BloodModel
             {
                 public Guid Id { get; set; }
                 public string Name { get; set; }
@@ -47,7 +49,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
             public QueryHandler(IDbContextScopeFactory scopeFactory)
             {
                 _scopeFactory = scopeFactory;
-            }           
+            }
 
             public Task<Result> Handle(Query message, CancellationToken cancellationToken)
             {
@@ -56,7 +58,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                     var context = scope.DbContexts.Get<MainContext>();
 
                     var query =
-                        context.Set<DataModel.Models.Category>()
+                        context.Set<Blood>()
                             .Where(w => w.StatusId == true);
 
                     if (!string.IsNullOrEmpty(message.Name))
@@ -65,12 +67,12 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                     }
 
                     var count = query.Count();
-                    var items = query.OrderBy(s => s.Name).Select(s => new NestedModel.CategoryModel()
+                    var items = query.OrderBy(s => s.Name).Select(s => new NestedModel.BloodModel()
                     {
                         Id = s.Id,
                         Name = s.Name
                     }).Skip(message.Skip).Take(message.Take).ToList();
-                  
+
 
                     var result = new Result()
                     {

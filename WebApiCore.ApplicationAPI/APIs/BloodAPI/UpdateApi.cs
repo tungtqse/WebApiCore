@@ -7,9 +7,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApiCore.DataAccess;
+using WebApiCore.DataModel.Models;
 using WebApiCore.DataTransferObject;
 
-namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
+namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 {
     public class UpdateApi
     {
@@ -64,20 +65,19 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                         {
                             var context = scope.DbContexts.Get<MainContext>();
 
-                            
-                            isValid = context.Set<DataModel.Models.Category>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
+                            isValid = context.Set<Blood>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
 
                             if (!isValid)
                             {
-                                var category = context.Set<DataModel.Models.Category>().Where(f => f.Id == message.Id).FirstOrDefault();
-                                category.Name = message.Name;
+                                var blood = context.Set<Blood>().Where(f => f.Id == message.Id).FirstOrDefault();
+                                blood.Name = message.Name;
                                 isValid = true;
                                 context.SaveChanges();
                             }
                             else
                             {
                                 result.Messages.Add("Name is existed");
-                            }                            
+                            }
                         }
                     }
                     catch (Exception ex)
