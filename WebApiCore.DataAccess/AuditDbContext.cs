@@ -8,6 +8,7 @@ using System.Text;
 using System.Xml.Linq;
 using WebApiCore.Common;
 using WebApiCore.DataModel.Models;
+using WebApiCore.Utility;
 
 namespace WebApiCore.DataAccess
 {
@@ -22,8 +23,9 @@ namespace WebApiCore.DataAccess
 
         public override int SaveChanges()
         {
-            var list = new List<EntityEntry>();
-            Guid currentUserId = Guid.Empty; 
+
+            var list = new List<AuditTrail>();
+            Guid currentUserId = HttpContextManager.GetUserId(); 
             var currentDateTime = DateTime.Now;
             var dbset = this.Set<AuditTrail>();
 
@@ -43,7 +45,24 @@ namespace WebApiCore.DataAccess
                         var status = entity.GetProperty(Constant.BaseProperty.StatusId).GetValue(entry.Entity, null);
                         if (status == null || status.Equals(false))
                             entity.GetProperty(Constant.BaseProperty.StatusId).SetValue(entry.Entity, true, null);
-                        list.Add(entry);
+
+                        XElement xml = new XElement("Create");
+                        var itemId = (Guid)entity.GetProperty(Constant.AuditTrailProperty.Id).GetValue(entry.Entity, null);
+                        var datatable = GetTableName(entity);
+                        var auditTrail = new AuditTrail()
+                        {
+                            ItemId = itemId,
+                            TableName = datatable,
+                            ModifiedDate = currentDateTime,
+                            ModifiedBy = currentUserId,
+                            TrackChange = xml.ToString(),
+                            TransactionId = TransactionId,
+                            StatusId = true,
+                            CreatedDate = currentDateTime,
+                            CreatedBy = currentUserId
+                        };
+
+                        list.Add(auditTrail);
 
                         #endregion
                     }
@@ -97,7 +116,7 @@ namespace WebApiCore.DataAccess
                         };
 
                         // Insert AuditTrail
-                        dbset.Add(auditTrail);
+                        list.Add(auditTrail);
 
                         #endregion
                     }
@@ -130,31 +149,7 @@ namespace WebApiCore.DataAccess
 
                 try
                 {
-                    foreach (var entry in list)
-                    {
-                        var type = entry.Entity.GetType();
-                        var entityName = type.Name;
-                        XElement xml = new XElement("Create");
-
-                        // var instanceAuditTrail = Activator.CreateInstance(auditType);
-                        var itemId = (Guid)type.GetProperty(Constant.AuditTrailProperty.Id).GetValue(entry.Entity, null);
-                        var datatable = GetTableName(type);
-                        var auditTrail = new AuditTrail()
-                        {
-                            ItemId = itemId,
-                            TableName = datatable,
-                            ModifiedDate = currentDateTime,
-                            ModifiedBy = currentUserId,
-                            TrackChange = xml.ToString(),
-                            TransactionId = TransactionId,
-                            StatusId = true,
-                            CreatedDate = currentDateTime,
-                            CreatedBy = currentUserId
-                        };
-
-                        // Insert AuditTrail
-                        dbset.Add(auditTrail);
-                    }
+                    dbset.AddRange(list);
 
                     base.SaveChanges();
                 }

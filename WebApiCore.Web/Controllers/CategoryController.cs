@@ -39,10 +39,7 @@ namespace WebApiCore.Web.Controllers
 
         [HttpPost]
         public async Task<IActionResult> Create(ApplicationAPI.APIs.CategoryAPI.CreateApi.Command command)
-        {
-            var identity = (System.Security.Claims.ClaimsIdentity)User.Identity;
-            IEnumerable<System.Security.Claims.Claim> claims = identity.Claims;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value;
+        {            
             var result = await _mediator.Send(command);
 
             return Ok(result);

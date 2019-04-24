@@ -1,36 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NetCore.AutoRegisterDi;
 using WebApiCore.DataAccess;
-using WebApiCore.DataAccess.Repository;
-using WebApiCore.DataAccess.UnitOfWork;
 using WebApiCore.DataAccess.DbScopeFactory;
 using EntityFramework.DbContextScope;
 using EntityFramework.DbContextScope.Interfaces;
-using Microsoft.AspNetCore.Authentication;
-using WebApiCore.Web.Helper;
 using WebApiCore.DataTransferObject;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using WebApiCore.Utility;
 
 namespace WebApiCore.Web
 {
@@ -64,6 +55,13 @@ namespace WebApiCore.Web
 
             // configure JWT
             JWTConfig(services);
+
+            // configure Service
+            //services.AddScoped<IApplicationUser, ApplicationUser>();
+
+            //services.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
+
+            services.AddHttpContextAccessor();
         }
 
         private void JWTConfig(IServiceCollection services)
@@ -179,6 +177,9 @@ namespace WebApiCore.Web
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials());
+
+            Utility.AppContext.Configure(app.ApplicationServices
+                      .GetRequiredService<IHttpContextAccessor>());
 
             app.UseAuthentication();
             app.UseHttpsRedirection();

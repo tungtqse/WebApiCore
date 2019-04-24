@@ -14,6 +14,7 @@
     <ProjectReference Include="..\WebApiCore.Common\WebApiCore.Common.csproj" />
     <ProjectReference Include="..\WebApiCore.DataModel\WebApiCore.DataModel.csproj" />
     <ProjectReference Include="..\WebApiCore.DomainService\WebApiCore.DomainService.csproj" />
+    <ProjectReference Include="..\WebApiCore.Ulity\WebApiCore.Utility.csproj" />
   </ItemGroup>
 
 </Project>
