@@ -1,4 +1,6 @@
-﻿using EntityFramework.DbContextScope.Interfaces;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using EntityFramework.DbContextScope.Interfaces;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -29,6 +31,16 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
             public int Code { get; set; }
             public bool IsSuccessful { get; set; }
             public List<string> Messages { get; set; }
+        }
+
+        // Mapping
+        public class MappingProfile : Profile
+        {
+            public MappingProfile()
+            {
+                CreateMap<DataModel.Models.Category, NestedModel.CategoryModel>()
+                    ;
+            }
         }
 
         public class NestedModel
@@ -65,12 +77,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                     }
 
                     var count = query.Count();
-                    var items = query.OrderBy(s => s.Name).Select(s => new NestedModel.CategoryModel()
-                    {
-                        Id = s.Id,
-                        Name = s.Name
-                    }).Skip(message.Skip).Take(message.Take).ToList();
-                  
+                    var items = query.OrderBy(s => s.Name).Skip(message.Skip).Take(message.Take).ProjectTo<NestedModel.CategoryModel>().ToList();                  
 
                     var result = new Result()
                     {

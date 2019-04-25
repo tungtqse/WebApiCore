@@ -1,4 +1,5 @@
-﻿using EntityFramework.DbContextScope.Interfaces;
+﻿using AutoMapper;
+using EntityFramework.DbContextScope.Interfaces;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -21,8 +22,7 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 
         public class Result : IWebApiResponse
         {
-            public string Name { get; set; }
-            public Guid Id { get; set; }
+            public NestedModel.BloodModel Data { get; set; }
             public Result()
             {
                 Messages = new List<string>();
@@ -35,9 +35,20 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 
         public class NestedModel
         {
-            public class CategoryModel
+            public class BloodModel
             {
+                public Guid Id { get; set; }
                 public string Name { get; set; }
+            }
+        }
+
+        // Mapping
+        public class MappingProfile : Profile
+        {
+            public MappingProfile()
+            {
+                CreateMap<Blood, NestedModel.BloodModel>()
+                    ;
             }
         }
 
@@ -66,8 +77,7 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
                     if (item != null)
                     {
                         result.IsSuccessful = true;
-                        result.Name = item.Name;
-                        result.Id = item.Id;
+                        result.Data = Mapper.Map<NestedModel.BloodModel>(item);
                     }
                     else
                     {

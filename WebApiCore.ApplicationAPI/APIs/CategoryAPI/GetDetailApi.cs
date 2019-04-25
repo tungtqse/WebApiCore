@@ -1,4 +1,5 @@
-﻿using EntityFramework.DbContextScope.Interfaces;
+﻿using AutoMapper;
+using EntityFramework.DbContextScope.Interfaces;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -19,8 +20,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
         public class Result : IWebApiResponse
         {            
-            public string Name { get; set; }
-            public Guid Id { get; set; }
+            public NestedModel.CategoryModel Data { get; set; }
             public Result()
             {
                 Messages = new List<string>();
@@ -31,10 +31,21 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
             public List<string> Messages { get; set; }
         }
 
+        // Mapping
+        public class MappingProfile : Profile
+        {
+            public MappingProfile()
+            {
+                CreateMap<DataModel.Models.Category, NestedModel.CategoryModel>()
+                    ;
+            }
+        }
+
         public class NestedModel
         {
             public class CategoryModel
             {
+                public Guid Id { get; set; }
                 public string Name { get; set; }
             }
         }
@@ -64,8 +75,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                     if(item != null)
                     {
                         result.IsSuccessful = true;
-                        result.Name = item.Name;
-                        result.Id = item.Id;
+                        result.Data = Mapper.Map<NestedModel.CategoryModel>(item);
                     }
                     else
                     {

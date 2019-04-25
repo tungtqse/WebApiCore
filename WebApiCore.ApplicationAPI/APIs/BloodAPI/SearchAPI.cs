@@ -1,4 +1,6 @@
-﻿using EntityFramework.DbContextScope.Interfaces;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using EntityFramework.DbContextScope.Interfaces;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -42,6 +44,16 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
             }
         }
 
+        // Mapping
+        public class MappingProfile : Profile
+        {
+            public MappingProfile()
+            {
+                CreateMap<Blood, NestedModel.BloodModel>()
+                    ;
+            }
+        }
+
         public class QueryHandler : IRequestHandler<Query, Result>
         {
             private readonly IDbContextScopeFactory _scopeFactory;
@@ -67,12 +79,7 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
                     }
 
                     var count = query.Count();
-                    var items = query.OrderBy(s => s.Name).Select(s => new NestedModel.BloodModel()
-                    {
-                        Id = s.Id,
-                        Name = s.Name
-                    }).Skip(message.Skip).Take(message.Take).ToList();
-
+                    var items = query.OrderBy(s => s.Name).Skip(message.Skip).Take(message.Take).ProjectTo<NestedModel.BloodModel>().ToList();
 
                     var result = new Result()
                     {

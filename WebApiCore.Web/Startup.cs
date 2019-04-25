@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using WebApiCore.Utility;
+using AutoMapper;
 
 namespace WebApiCore.Web
 {
@@ -45,23 +46,41 @@ namespace WebApiCore.Web
             services.AddScoped(typeof(ApplicationDbContextOptions));
             services.AddTransient(typeof(IDbContextFactory),typeof(DbContextFactory));
             services.AddTransient(typeof(IDbContextScopeFactory), typeof(DbContextScopeFactory));
+            services.AddAutoMapper();
 
             // configure basic authentication 
             //services.AddAuthentication("BasicAuthentication")
             //    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
             // register MediatR Handler
-            MediatorConfig(services, typeof(ApplicationAPI.APIs.CategoryAPI.SearchApi.QueryHandler));
+            MediatorConfig(services, typeof(ApplicationAPI.MediatorModule), "Handler");
+
+            // register AutoMapper
+            AutoMapperConfig(services, typeof(ApplicationAPI.AutoMapperInitializer));
 
             // configure JWT
             JWTConfig(services);
 
-            // configure Service
-            //services.AddScoped<IApplicationUser, ApplicationUser>();
-
-            //services.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
-
+            // configure HttpContext
             services.AddHttpContextAccessor();
+        }
+
+        private void AutoMapperConfig(IServiceCollection services, Type type)
+        {
+            var assemblyToScan = Assembly.GetAssembly(type);
+            var assemblies = new[] { assemblyToScan };
+
+            var profiles = assemblies.SelectMany(x => x.GetExportedTypes()
+                .Where(t => typeof(Profile).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()))
+                .Where(y => y.IsClass && !y.IsAbstract && !y.IsGenericType && y.Name.EndsWith("MappingProfile")));          
+
+            Mapper.Initialize(cfg =>
+            {
+                foreach (var profile in profiles)
+                {
+                    cfg.AddProfile(profile);
+                }
+            });
         }
 
         private void JWTConfig(IServiceCollection services)
@@ -104,26 +123,22 @@ namespace WebApiCore.Web
         });
         }
 
-        private void MediatorConfig(IServiceCollection services, Type type)
+        private void MediatorConfig(IServiceCollection services, Type type, string name)
         {
             //Get Get Assembly of service project
             //var assemblyToScan = Assembly.GetAssembly(type); //..or whatever assembly you need
             var assemblyToScan = Assembly.GetAssembly(type);
+            var assemblies = new[] { assemblyToScan };
+
+            var allPublicTypes = assemblies.SelectMany(x => x.GetExportedTypes()
+                .Where(y => y.IsClass && !y.IsAbstract && !y.IsGenericType && y.Name.EndsWith(name)));
 
             //Config services injection
-            AddMediatRHandler(services, "Handler", assemblyToScan);
-        }
-
-        private void AddMediatRHandler(IServiceCollection services, string endName, params Assembly[] assemblies)
-        {
-            var allPublicTypes = assemblies.SelectMany(x => x.GetExportedTypes()
-                .Where(y => y.IsClass && !y.IsAbstract && !y.IsGenericType && y.Name.EndsWith("Handler")));
-
             foreach (var handler in allPublicTypes)
             {
                 services.AddMediatR(handler.GetTypeInfo().Assembly);
             }
-        }
+        }      
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
