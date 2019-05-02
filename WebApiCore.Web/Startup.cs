@@ -23,6 +23,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using FluentValidation.AspNetCore;
+using Swashbuckle.AspNetCore.Swagger;
+using System.Collections.Generic;
 
 namespace WebApiCore.Web
 {
@@ -42,15 +44,15 @@ namespace WebApiCore.Web
                     .AddFluentValidation(fv =>
                     {
                         fv.RegisterValidatorsFromAssemblyContaining<ApplicationAPI.APIModule>();
-                        fv.RunDefaultMvcValidationAfterFluentValidationExecutes = true;  
-                        fv.ImplicitlyValidateChildProperties = true;  
-                    }); 
+                        fv.RunDefaultMvcValidationAfterFluentValidationExecutes = true;
+                        fv.ImplicitlyValidateChildProperties = true;
+                    });
             services.AddDbContext<MainContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), builder => builder.MigrationsAssembly(typeof(Startup).Assembly.FullName)));
             //services.AddTransient(typeof(IDbRepository<>), typeof(DbRepository<>));
             //services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
             services.AddScoped(typeof(ApplicationDbContextOptions));
-            services.AddTransient(typeof(IDbContextFactory),typeof(DbContextFactory));
+            services.AddTransient(typeof(IDbContextFactory), typeof(DbContextFactory));
             services.AddTransient(typeof(IDbContextScopeFactory), typeof(DbContextScopeFactory));
             services.AddAutoMapper();
 
@@ -72,6 +74,9 @@ namespace WebApiCore.Web
 
             // configure FluentValidation
             FluentValidationConfig(services);
+
+            // configure Swagger
+            SwaggerConfig(services);
         }
 
         private void AutoMapperConfig(IServiceCollection services, Type type)
@@ -81,7 +86,7 @@ namespace WebApiCore.Web
 
             var profiles = assemblies.SelectMany(x => x.GetExportedTypes()
                 .Where(t => typeof(Profile).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()))
-                .Where(y => y.IsClass && !y.IsAbstract && !y.IsGenericType && y.Name.EndsWith("MappingProfile")));          
+                .Where(y => y.IsClass && !y.IsAbstract && !y.IsGenericType && y.Name.EndsWith("MappingProfile")));
 
             Mapper.Initialize(cfg =>
             {
@@ -147,7 +152,7 @@ namespace WebApiCore.Web
             {
                 services.AddMediatR(handler.GetTypeInfo().Assembly);
             }
-        }      
+        }
 
         private void FluentValidationConfig(IServiceCollection services)
         {
@@ -164,6 +169,28 @@ namespace WebApiCore.Web
                     };
                     return new BadRequestObjectResult(result);
                 };
+            });
+        }
+
+        private void SwaggerConfig(IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "Web API Core", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new ApiKeyScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = "header",
+                    Type = "apiKey"
+                });
+                c.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>>
+                {
+                    { "Bearer", new string[] { } }
+                });
+                // UseFullTypeNameInSchemaIds replacement for .NET Core when duplicate model name
+                c.CustomSchemaIds(x => x.FullName);
+                c.AddFluentValidationRules();
             });
         }
 
@@ -202,7 +229,7 @@ namespace WebApiCore.Web
                     //when no error, do next.
                     else await next();
                 });
-            });            
+            });
 
             if (env.IsDevelopment())
             {
@@ -223,9 +250,19 @@ namespace WebApiCore.Web
             Utility.AppContext.Configure(app.ApplicationServices
                       .GetRequiredService<IHttpContextAccessor>());
 
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+            app.UseSwaggerUI(c =>
+            {
+                c.RoutePrefix = "api-doc";
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Web API Core V1");
+            });
+
             app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc();
-        }        
+        }
     }
 }
