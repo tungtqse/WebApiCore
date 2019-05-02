@@ -21,8 +21,8 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using WebApiCore.Utility;
 using AutoMapper;
+using FluentValidation.AspNetCore;
 
 namespace WebApiCore.Web
 {
@@ -38,7 +38,13 @@ namespace WebApiCore.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                    .AddFluentValidation(fv =>
+                    {
+                        fv.RegisterValidatorsFromAssemblyContaining<ApplicationAPI.APIModule>();
+                        fv.RunDefaultMvcValidationAfterFluentValidationExecutes = true;  
+                        fv.ImplicitlyValidateChildProperties = true;  
+                    }); 
             services.AddDbContext<MainContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), builder => builder.MigrationsAssembly(typeof(Startup).Assembly.FullName)));
             //services.AddTransient(typeof(IDbRepository<>), typeof(DbRepository<>));
             //services.AddTransient<IUnitOfWork, UnitOfWork>();
@@ -53,16 +59,19 @@ namespace WebApiCore.Web
             //    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
             // register MediatR Handler
-            MediatorConfig(services, typeof(ApplicationAPI.MediatorModule), "Handler");
+            MediatorConfig(services, typeof(ApplicationAPI.APIModule), "Handler");
 
             // register AutoMapper
-            AutoMapperConfig(services, typeof(ApplicationAPI.AutoMapperInitializer));
+            AutoMapperConfig(services, typeof(ApplicationAPI.APIModule));
 
             // configure JWT
             JWTConfig(services);
 
             // configure HttpContext
             services.AddHttpContextAccessor();
+
+            // configure FluentValidation
+            FluentValidationConfig(services);
         }
 
         private void AutoMapperConfig(IServiceCollection services, Type type)
@@ -139,6 +148,24 @@ namespace WebApiCore.Web
                 services.AddMediatR(handler.GetTypeInfo().Assembly);
             }
         }      
+
+        private void FluentValidationConfig(IServiceCollection services)
+        {
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = (context) =>
+                {
+                    var errors = context.ModelState.Values.SelectMany(x => x.Errors.Select(m => m.ErrorMessage)).ToList();
+                    var result = new
+                    {
+                        Code = 0,
+                        IsSuccessful = false,
+                        Messages = errors
+                    };
+                    return new BadRequestObjectResult(result);
+                };
+            });
+        }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

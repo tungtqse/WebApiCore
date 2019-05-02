@@ -4,7 +4,7 @@ using System.Text;
 
 namespace WebApiCore.ApplicationAPI
 {
-    public class MediatorModule
+    public class APIModule
     {
     }
 }

@@ -1,7 +1,9 @@
 ﻿using EntityFramework.DbContextScope.Interfaces;
+using FluentValidation;
 using MediatR;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,15 +31,26 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
             public List<string> Messages { get; set; }
         }
 
+        public class CommandValidator : AbstractValidator<Command>
+        {
+            public CommandValidator()
+            {
+                RuleFor(f => f.Name).NotNull().NotEmpty()
+                    .WithMessage("Name is null or empty");
+            }
+        }
+
         #region CommandHandler
 
         public class CommandHandler : IRequestHandler<Command, CommandResponse>
         {
             private readonly IDbContextScopeFactory _scopeFactory;
+            private readonly IValidatorFactory _validatorFactory;
 
-            public CommandHandler(IDbContextScopeFactory scopeFactory)
+            public CommandHandler(IDbContextScopeFactory scopeFactory, IValidatorFactory validatorFactory)
             {
                 _scopeFactory = scopeFactory;
+                _validatorFactory = validatorFactory;
             }
 
             public Task<CommandResponse> Handle(Command message, CancellationToken cancellationToken)
@@ -48,35 +61,26 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
                 var isValid = true;
 
-                if (string.IsNullOrEmpty(message.Name))
+                try
+                {
+                    using (var scope = _scopeFactory.Create())
+                    {
+                        var context = scope.DbContexts.Get<MainContext>();
+
+                        var category = new DataModel.Models.Category()
+                        {
+                            Name = message.Name
+                        };
+
+                        context.Set<DataModel.Models.Category>().Add(category);
+
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
                 {
                     isValid = false;
-                    result.Messages.Add("Name is required");
-                }
-               
-                if (isValid)
-                {
-                    try
-                    {
-                        using (var scope = _scopeFactory.Create())
-                        {
-                            var context = scope.DbContexts.Get<MainContext>();
-
-                            var category = new DataModel.Models.Category()
-                            {
-                                Name = message.Name
-                            };
-
-                            context.Set<DataModel.Models.Category>().Add(category);
-
-                            context.SaveChanges();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        isValid = false;
-                        result.Messages.Add(ex.Message);
-                    }  
+                    result.Messages.Add(ex.Message);
                 }
 
                 result.IsSuccessful = isValid;
