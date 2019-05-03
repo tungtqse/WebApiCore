@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebApiCore.LoggerService;
 
 namespace WebApiCore.Web.Controllers
 {
@@ -25,7 +26,6 @@ namespace WebApiCore.Web.Controllers
         public async Task<IActionResult> Get(ApplicationAPI.APIs.BloodAPI.GetApi.Query query)
         {
             var result = await _mediator.Send(query);
-
             return Ok(result);
         }
 

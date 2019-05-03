@@ -62,32 +62,24 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
                 var isValid = true;
 
-                try
+                using (var scope = _scopeFactory.Create())
                 {
-                    using (var scope = _scopeFactory.Create())
+                    var context = scope.DbContexts.Get<MainContext>();
+
+
+                    isValid = context.Set<DataModel.Models.Category>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (!isValid)
                     {
-                        var context = scope.DbContexts.Get<MainContext>();
-
-
-                        isValid = context.Set<DataModel.Models.Category>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
-
-                        if (!isValid)
-                        {
-                            var category = context.Set<DataModel.Models.Category>().Where(f => f.Id == message.Id).FirstOrDefault();
-                            category.Name = message.Name;
-                            isValid = true;
-                            context.SaveChanges();
-                        }
-                        else
-                        {
-                            result.Messages.Add("Name is existed");
-                        }
+                        var category = context.Set<DataModel.Models.Category>().Where(f => f.Id == message.Id).FirstOrDefault();
+                        category.Name = message.Name;
+                        isValid = true;
+                        context.SaveChanges();
                     }
-                }
-                catch (Exception ex)
-                {
-                    isValid = false;
-                    result.Messages.Add(ex.Message);
+                    else
+                    {
+                        result.Messages.Add("Name is existed");
+                    }
                 }
 
                 result.IsSuccessful = isValid;

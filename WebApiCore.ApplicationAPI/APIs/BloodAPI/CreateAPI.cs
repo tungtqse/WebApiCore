@@ -62,26 +62,18 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 
                 var isValid = true;
 
-                try
+                using (var scope = _scopeFactory.Create())
                 {
-                    using (var scope = _scopeFactory.Create())
+                    var context = scope.DbContexts.Get<MainContext>();
+
+                    var blood = new Blood()
                     {
-                        var context = scope.DbContexts.Get<MainContext>();
+                        Name = message.Name
+                    };
 
-                        var blood = new Blood()
-                        {
-                            Name = message.Name
-                        };
+                    context.Set<Blood>().Add(blood);
 
-                        context.Set<Blood>().Add(blood);
-
-                        context.SaveChanges();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    isValid = false;
-                    result.Messages.Add(ex.Message);
+                    context.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

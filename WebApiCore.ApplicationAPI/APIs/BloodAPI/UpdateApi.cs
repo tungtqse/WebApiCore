@@ -63,31 +63,23 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 
                 var isValid = true;
 
-                try
+                using (var scope = _scopeFactory.Create())
                 {
-                    using (var scope = _scopeFactory.Create())
+                    var context = scope.DbContexts.Get<MainContext>();
+
+                    isValid = context.Set<Blood>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (!isValid)
                     {
-                        var context = scope.DbContexts.Get<MainContext>();
-
-                        isValid = context.Set<Blood>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
-
-                        if (!isValid)
-                        {
-                            var blood = context.Set<Blood>().Where(f => f.Id == message.Id).FirstOrDefault();
-                            blood.Name = message.Name;
-                            isValid = true;
-                            context.SaveChanges();
-                        }
-                        else
-                        {
-                            result.Messages.Add("Name is existed");
-                        }
+                        var blood = context.Set<Blood>().Where(f => f.Id == message.Id).FirstOrDefault();
+                        blood.Name = message.Name;
+                        isValid = true;
+                        context.SaveChanges();
                     }
-                }
-                catch (Exception ex)
-                {
-                    isValid = false;
-                    result.Messages.Add(ex.Message);
+                    else
+                    {
+                        result.Messages.Add("Name is existed");
+                    }
                 }
 
                 result.IsSuccessful = isValid;

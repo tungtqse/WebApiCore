@@ -17,4 +17,8 @@
     <Folder Include="Features\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\WebApiCore.LoggerService\WebApiCore.LoggerService.csproj" />
+  </ItemGroup>
+
 </Project>

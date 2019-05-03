@@ -61,26 +61,18 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
                 var isValid = true;
 
-                try
+                using (var scope = _scopeFactory.Create())
                 {
-                    using (var scope = _scopeFactory.Create())
+                    var context = scope.DbContexts.Get<MainContext>();
+
+                    var category = new DataModel.Models.Category()
                     {
-                        var context = scope.DbContexts.Get<MainContext>();
+                        Name = message.Name
+                    };
 
-                        var category = new DataModel.Models.Category()
-                        {
-                            Name = message.Name
-                        };
+                    context.Set<DataModel.Models.Category>().Add(category);
 
-                        context.Set<DataModel.Models.Category>().Add(category);
-
-                        context.SaveChanges();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    isValid = false;
-                    result.Messages.Add(ex.Message);
+                    context.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

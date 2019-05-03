@@ -25,6 +25,10 @@ using AutoMapper;
 using FluentValidation.AspNetCore;
 using Swashbuckle.AspNetCore.Swagger;
 using System.Collections.Generic;
+using WebApiCore.Utility.ErrorHandle;
+using NLog;
+using System.IO;
+using WebApiCore.LoggerService;
 
 namespace WebApiCore.Web
 {
@@ -32,6 +36,7 @@ namespace WebApiCore.Web
     {
         public Startup(IConfiguration configuration)
         {
+            LogManager.LoadConfiguration(String.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
             Configuration = configuration;
         }
 
@@ -77,6 +82,9 @@ namespace WebApiCore.Web
 
             // configure Swagger
             SwaggerConfig(services);
+
+            // configure NLog
+            services.ConfigureLoggerService();
         }
 
         private void AutoMapperConfig(IServiceCollection services, Type type)
@@ -119,22 +127,22 @@ namespace WebApiCore.Web
             {
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = issuer,
+            .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = issuer,
 
-                ValidateAudience = true,
-                ValidAudience = audience,
+                        ValidateAudience = true,
+                        ValidAudience = audience,
 
-                ValidateLifetime = true,
+                        ValidateLifetime = true,
 
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey
-            };
-        });
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = signingKey
+                    };
+                });
         }
 
         private void MediatorConfig(IServiceCollection services, Type type, string name)
@@ -195,8 +203,10 @@ namespace WebApiCore.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerManager logger)
         {
+            #region Old UseExceptionHandler
+            /*
             app.UseExceptionHandler(appBuilder =>
             {
                 appBuilder.Use(async (context, next) =>
@@ -230,6 +240,8 @@ namespace WebApiCore.Web
                     else await next();
                 });
             });
+            */
+            #endregion
 
             if (env.IsDevelopment())
             {
@@ -259,6 +271,9 @@ namespace WebApiCore.Web
                 c.RoutePrefix = "api-doc";
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Web API Core V1");
             });
+
+            // UseExceptionHandler extension
+            app.ConfigureExceptionHandler(logger);
 
             app.UseAuthentication();
             app.UseHttpsRedirection();

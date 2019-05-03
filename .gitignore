@@ -79,3 +79,5 @@ bin/
 bower_components/
 *.user
 *.pubxml
+/WebApiCore.Web/~../internal_logs
+/WebApiCore.Web/logs
