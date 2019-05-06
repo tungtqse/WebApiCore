@@ -25,14 +25,14 @@ namespace WebApiCore.Utility.ErrorHandle
 
                     var error = context.Features[typeof(IExceptionHandlerFeature)] as IExceptionHandlerFeature;
 
-                    if(error != null && error.Error != null)
+                    if (error != null && error.Error != null)
                     {
                         logger.LogError($"Something went wrong: {error.Error}");
                         //when authorization has failed, should retrun a json message to client
                         if (error.Error is SecurityTokenExpiredException)
                         {
                             context.Response.StatusCode = 401;
-                            context.Response.ContentType = "application/json";                            
+                            context.Response.ContentType = "application/json";
 
                             await context.Response.WriteAsync(JsonConvert.SerializeObject(new ErrorDetails
                             {
@@ -42,7 +42,7 @@ namespace WebApiCore.Utility.ErrorHandle
                             }));
                         }
                         //when orther error, retrun a error message json to client
-                        else 
+                        else
                         {
                             context.Response.StatusCode = 500;
                             context.Response.ContentType = "application/json";
@@ -53,7 +53,54 @@ namespace WebApiCore.Utility.ErrorHandle
                                 Messages = new List<string>() { error.Error.Message }
                             }));
                         }
-                    }                    
+                    }
+                });
+            });
+        }
+
+        public static void ConfigureCustomExceptionMiddleware(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<CustomHandleException.ExceptionMiddleware>();
+        }
+
+        public static void ConfigureException(this IApplicationBuilder app, ILoggerManager logger)
+        {
+            app.UseExceptionHandler(appBuilder =>
+            {
+                appBuilder.Use(async (context, next) =>
+                {
+                    var error = context.Features[typeof(IExceptionHandlerFeature)] as IExceptionHandlerFeature;
+
+                    if(error != null && error.Error != null)
+                    {
+                        logger.LogError($"Something went wrong: {error.Error}");
+                    }
+
+                    //when authorization has failed, should retrun a json message to client
+                    if (error != null && error.Error is SecurityTokenExpiredException)
+                    {
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+
+                        await context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                        {
+                            State = "Unauthorized",
+                            Msg = "token expired"
+                        }));
+                    }
+                    //when orther error, retrun a error message json to client
+                    else if (error != null && error.Error != null)
+                    {
+                        context.Response.StatusCode = 500;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                        {
+                            State = "Internal Server Error",
+                            Msg = error.Error.Message
+                        }));
+                    }
+                    //when no error, do next.
+                    else await next();
                 });
             });
         }

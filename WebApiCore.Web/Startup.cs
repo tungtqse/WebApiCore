@@ -169,9 +169,10 @@ namespace WebApiCore.Web
                 options.InvalidModelStateResponseFactory = (context) =>
                 {
                     var errors = context.ModelState.Values.SelectMany(x => x.Errors.Select(m => m.ErrorMessage)).ToList();
-                    var result = new
+                    var result = new ErrorDetails
                     {
-                        Code = 0,
+                        Code = 500,
+                        State = "Internal Server Error",
                         IsSuccessful = false,
                         Messages = errors
                     };
@@ -204,45 +205,7 @@ namespace WebApiCore.Web
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerManager logger)
-        {
-            #region Old UseExceptionHandler
-            /*
-            app.UseExceptionHandler(appBuilder =>
-            {
-                appBuilder.Use(async (context, next) =>
-                {
-                    var error = context.Features[typeof(IExceptionHandlerFeature)] as IExceptionHandlerFeature;
-
-                    //when authorization has failed, should retrun a json message to client
-                    if (error != null && error.Error is SecurityTokenExpiredException)
-                    {
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-
-                        await context.Response.WriteAsync(JsonConvert.SerializeObject(new
-                        {
-                            State = "Unauthorized",
-                            Msg = "token expired"
-                        }));
-                    }
-                    //when orther error, retrun a error message json to client
-                    else if (error != null && error.Error != null)
-                    {
-                        context.Response.StatusCode = 500;
-                        context.Response.ContentType = "application/json";
-                        await context.Response.WriteAsync(JsonConvert.SerializeObject(new
-                        {
-                            State = "Internal Server Error",
-                            Msg = error.Error.Message
-                        }));
-                    }
-                    //when no error, do next.
-                    else await next();
-                });
-            });
-            */
-            #endregion
-
+        {           
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -272,8 +235,14 @@ namespace WebApiCore.Web
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Web API Core V1");
             });
 
+            // Old UseExceptionHandler
+            // app.ConfigureException(logger);
+
             // UseExceptionHandler extension
             app.ConfigureExceptionHandler(logger);
+
+            // Custom Exception Handler extension
+            //app.ConfigureCustomExceptionMiddleware();
 
             app.UseAuthentication();
             app.UseHttpsRedirection();
