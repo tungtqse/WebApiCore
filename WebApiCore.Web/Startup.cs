@@ -83,7 +83,7 @@ namespace WebApiCore.Web
             // configure Swagger
             SwaggerConfig(services);
 
-            // configure NLog
+            // configure NLog + Elmah
             services.ConfigureLoggerService();
         }
 
@@ -243,6 +243,9 @@ namespace WebApiCore.Web
 
             // Custom Exception Handler extension
             //app.ConfigureCustomExceptionMiddleware();
+
+            // Use Elmah
+            app.ConfigureElmah();
 
             app.UseAuthentication();
             app.UseHttpsRedirection();

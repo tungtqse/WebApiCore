@@ -5,7 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ElmahCore" Version="1.2.5" />
+    <PackageReference Include="ElmahCore.Sql" Version="1.2.5" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ElmahLogger\" />
   </ItemGroup>
 
 </Project>

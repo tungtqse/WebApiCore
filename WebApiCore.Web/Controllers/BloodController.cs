@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ElmahCore;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -51,6 +52,12 @@ namespace WebApiCore.Web.Controllers
             var result = await _mediator.Send(command);
 
             return Ok(result);
+        }
+
+        public IActionResult Test()
+        {
+            HttpContext.RiseError(new InvalidOperationException("Test"));
+            return Ok();
         }
     }
 }
