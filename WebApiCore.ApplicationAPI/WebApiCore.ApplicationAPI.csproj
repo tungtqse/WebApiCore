@@ -21,4 +21,8 @@
     <ProjectReference Include="..\WebApiCore.Ulity\WebApiCore.Utility.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="APIs\Movies\" />
+  </ItemGroup>
+
 </Project>
