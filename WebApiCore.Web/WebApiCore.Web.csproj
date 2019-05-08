@@ -36,6 +36,7 @@
     <Compile Include="Controllers\CategoryController.cs" />
     <Compile Include="Controllers\IdolController.cs" />
     <Compile Include="Controllers\MovieController.cs" />
+    <Compile Include="Controllers\StudioController.cs" />
     <Compile Include="Controllers\TestController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Helper\BasicAuthenticationHandler.cs" />
