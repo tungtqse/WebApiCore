@@ -95,7 +95,7 @@ namespace WebApiCore.ApplicationAPI.APIs.Movies
                         var movie = context.Set<Movie>().Where(f => f.Id == message.Id).FirstOrDefault();
                         Mapper.Map(message, movie);
                         isValid = true;
-                        context.SaveChanges();
+                        scope.SaveChanges();
                     }
                     else
                     {

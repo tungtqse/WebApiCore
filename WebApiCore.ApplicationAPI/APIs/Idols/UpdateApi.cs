@@ -101,7 +101,7 @@ namespace WebApiCore.ApplicationAPI.APIs.Idols
                         var idol = context.Set<Idol>().Where(f => f.Id == message.Id).FirstOrDefault();
                         Mapper.Map(message, idol);
                         isValid = true;
-                        context.SaveChanges();
+                        scope.SaveChanges();
                     }
                     else
                     {

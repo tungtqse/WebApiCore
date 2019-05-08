@@ -14,10 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\WebApiCore.DataAccess\WebApiCore.DataAccess.csproj" />
+    <ProjectReference Include="..\WebApiCore.DataModel\WebApiCore.DataModel.csproj" />
+    <ProjectReference Include="..\WebApiCore.DataTransferObject\WebApiCore.DataTransferObject.csproj" />
     <ProjectReference Include="..\WebApiCore.LoggerService\WebApiCore.LoggerService.csproj" />
   </ItemGroup>
 

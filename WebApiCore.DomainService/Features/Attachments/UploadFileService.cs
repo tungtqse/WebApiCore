@@ -4,24 +4,25 @@ using FluentValidation;
 using MediatR;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApiCore.DataAccess;
 using WebApiCore.DataModel.Models;
 using WebApiCore.DataTransferObject;
 
-namespace WebApiCore.ApplicationAPI.APIs.Albums
+namespace WebApiCore.DomainService.Features.Attachments
 {
-    public class UpdateApi
+    public class UploadFileService
     {
         public class Command : IRequest<CommandResponse>
         {
-            public Guid Id { get; set; }
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public DateTime? PublishDate { get; set; }
+            public Guid ParentId { get; set; }
+            public string FileName { get; set; }
+            public string FileType { get; set; }
+            public string FileExtension { get; set; }
+            public int FileSize { get; set; }
+            public byte[] FileData { get; set; }
+            public string Remarks { get; set; }
         }
 
         public class CommandResponse : IWebApiResponse
@@ -40,25 +41,23 @@ namespace WebApiCore.ApplicationAPI.APIs.Albums
         {
             public CommandValidator()
             {
-                RuleFor(f => f.Name).NotNull().NotEmpty()
-                    .WithMessage("Title is null or empty");
+                RuleFor(f => f.ParentId).NotNull().NotEmpty().NotEqual(Guid.Empty)
+                    .WithMessage("ParentId is null or empty");
+                RuleFor(f => f.FileData).NotNull().NotEmpty()
+                    .WithMessage("FileData is null or empty");
             }
         }
 
-        // Mapping
         public class MappingProfile : Profile
         {
             public MappingProfile()
             {
-                CreateMap<Command, Album>()
-                    .ForMember(m => m.Id, o => o.Ignore())
-                    .ForMember(m => m.CreatedDate, o => o.Ignore())
-                    .ForMember(m => m.ModifiedDate, o => o.Ignore())
+                CreateMap<Command, AttachmentFile>()
+                    .ForMember(m=>m.Id, o=>o.MapFrom(f=>Guid.NewGuid()))
+                    .ForMember(m => m.ParentId, o => o.MapFrom(f => f.ParentId))
                     ;
             }
         }
-
-        #region CommandHandler
 
         public class CommandHandler : IRequestHandler<Command, CommandResponse>
         {
@@ -71,42 +70,33 @@ namespace WebApiCore.ApplicationAPI.APIs.Albums
                 _validatorFactory = validatorFactory;
             }
 
-            public Task<CommandResponse> Handle(Command message, CancellationToken cancellationToken)
+            public async Task<CommandResponse> Handle(Command message, CancellationToken cancellationToken)
             {
                 var result = new CommandResponse();
 
-                #region Validate
-
-                var isValid = true;
-
                 using (var scope = _scopeFactory.Create())
                 {
-                    var context = scope.DbContexts.Get<MainContext>();
-
-                    isValid = context.Set<Album>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
-
-                    if (!isValid)
+                    try
                     {
-                        var item = context.Set<Album>().Where(f => f.Id == message.Id).FirstOrDefault();
-                        Mapper.Map(message, item);
-                        isValid = true;
-                        scope.SaveChanges();
+                        var context = scope.DbContexts.Get<MainContext>();
+
+                        var att = Mapper.Map<AttachmentFile>(message);
+
+                        context.Set<AttachmentFile>().Add(att);
+
+                        result.IsSuccessful = true;
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        result.Messages.Add("Name is existed");
+                        result.Messages.Add(ex.Message);
                     }
+
+                    scope.SaveChanges();
+
                 }
 
-                result.IsSuccessful = isValid;
-
-                #endregion
-
-
-                return Task.FromResult(result);
+                return await Task.FromResult(result);
             }
         }
-
-        #endregion
     }
 }

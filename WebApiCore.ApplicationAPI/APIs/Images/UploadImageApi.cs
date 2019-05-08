@@ -12,16 +12,17 @@ using WebApiCore.DataAccess;
 using WebApiCore.DataModel.Models;
 using WebApiCore.DataTransferObject;
 
-namespace WebApiCore.ApplicationAPI.APIs.Albums
+namespace WebApiCore.ApplicationAPI.APIs.Images
 {
-    public class UpdateApi
+    public class UploadImageApi
     {
         public class Command : IRequest<CommandResponse>
         {
-            public Guid Id { get; set; }
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public DateTime? PublishDate { get; set; }
+            public byte[] FileData { get; set; }
+            public string FileName { get; set; }
+            public int FileSize { get; set; }
+            public string FileType { get; set; }
+            public string FileExtension { get; set; }
         }
 
         public class CommandResponse : IWebApiResponse
@@ -36,24 +37,12 @@ namespace WebApiCore.ApplicationAPI.APIs.Albums
             public List<string> Messages { get; set; }
         }
 
-        public class CommandValidator : AbstractValidator<Command>
-        {
-            public CommandValidator()
-            {
-                RuleFor(f => f.Name).NotNull().NotEmpty()
-                    .WithMessage("Title is null or empty");
-            }
-        }
-
-        // Mapping
         public class MappingProfile : Profile
         {
             public MappingProfile()
             {
-                CreateMap<Command, Album>()
-                    .ForMember(m => m.Id, o => o.Ignore())
-                    .ForMember(m => m.CreatedDate, o => o.Ignore())
-                    .ForMember(m => m.ModifiedDate, o => o.Ignore())
+                CreateMap<Command, AttachmentFile>()
+                    .ForMember(m => m.Id, o => o.MapFrom(f => Guid.NewGuid()))
                     ;
             }
         }
@@ -63,12 +52,10 @@ namespace WebApiCore.ApplicationAPI.APIs.Albums
         public class CommandHandler : IRequestHandler<Command, CommandResponse>
         {
             private readonly IDbContextScopeFactory _scopeFactory;
-            private readonly IValidatorFactory _validatorFactory;
 
-            public CommandHandler(IDbContextScopeFactory scopeFactory, IValidatorFactory validatorFactory)
+            public CommandHandler(IDbContextScopeFactory scopeFactory)
             {
                 _scopeFactory = scopeFactory;
-                _validatorFactory = validatorFactory;
             }
 
             public Task<CommandResponse> Handle(Command message, CancellationToken cancellationToken)
@@ -83,19 +70,26 @@ namespace WebApiCore.ApplicationAPI.APIs.Albums
                 {
                     var context = scope.DbContexts.Get<MainContext>();
 
-                    isValid = context.Set<Album>().Any(f => f.Id != message.Id && f.Name.Equals(message.Name, StringComparison.OrdinalIgnoreCase));
+                    var attachmentId = Guid.NewGuid();
 
-                    if (!isValid)
+                    var image = new Image()
                     {
-                        var item = context.Set<Album>().Where(f => f.Id == message.Id).FirstOrDefault();
-                        Mapper.Map(message, item);
-                        isValid = true;
-                        scope.SaveChanges();
-                    }
-                    else
-                    {
-                        result.Messages.Add("Name is existed");
-                    }
+                        AltName = message.FileName,
+                        Extension = message.FileExtension,
+                        Size = message.FileSize,
+                        Id = Guid.NewGuid(),
+                        AttachmentFileId = attachmentId
+                    };
+
+                    var attchment = Mapper.Map<AttachmentFile>(message);
+                    attchment.ParentId = image.Id;
+                    attchment.Id = attachmentId;
+
+                    image.AttachmentFile = attchment;
+
+                    context.Set<Image>().Add(image);
+
+                    scope.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

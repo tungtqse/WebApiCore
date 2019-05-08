@@ -72,7 +72,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
 
                     context.Set<DataModel.Models.Category>().Add(category);
 
-                    context.SaveChanges();
+                    scope.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

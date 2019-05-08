@@ -74,7 +74,7 @@ namespace WebApiCore.ApplicationAPI.APIs.CategoryAPI
                         var category = context.Set<DataModel.Models.Category>().Where(f => f.Id == message.Id).FirstOrDefault();
                         category.Name = message.Name;
                         isValid = true;
-                        context.SaveChanges();
+                        scope.SaveChanges();
                     }
                     else
                     {

@@ -104,7 +104,7 @@ namespace WebApiCore.ApplicationAPI.APIs.Authentication
                                 context.Set<UserProfile>().Add(profile);
                                 context.Set<UserCredential>().Add(user);
 
-                                context.SaveChanges();
+                                scope.SaveChanges();
                             }
                         }
                         catch (Exception ex)

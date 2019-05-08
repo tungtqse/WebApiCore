@@ -35,6 +35,7 @@
     <Compile Include="Controllers\BloodController.cs" />
     <Compile Include="Controllers\CategoryController.cs" />
     <Compile Include="Controllers\IdolController.cs" />
+    <Compile Include="Controllers\ImageController.cs" />
     <Compile Include="Controllers\MovieController.cs" />
     <Compile Include="Controllers\StudioController.cs" />
     <Compile Include="Controllers\TestController.cs" />

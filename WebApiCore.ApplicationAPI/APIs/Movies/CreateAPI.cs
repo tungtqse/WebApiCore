@@ -98,7 +98,7 @@ namespace WebApiCore.ApplicationAPI.APIs.Movies
                         result.Messages.Add("Code is existed");
                     }
 
-                    context.SaveChanges();
+                    scope.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

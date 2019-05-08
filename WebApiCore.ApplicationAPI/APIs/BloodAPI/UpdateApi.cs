@@ -74,7 +74,7 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
                         var blood = context.Set<Blood>().Where(f => f.Id == message.Id).FirstOrDefault();
                         blood.Name = message.Name;
                         isValid = true;
-                        context.SaveChanges();
+                        scope.SaveChanges();
                     }
                     else
                     {

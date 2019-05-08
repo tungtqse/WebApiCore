@@ -100,7 +100,7 @@ namespace WebApiCore.ApplicationAPI.APIs.Idols
                         isValid = true;
                     }                    
 
-                    context.SaveChanges();
+                    scope.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

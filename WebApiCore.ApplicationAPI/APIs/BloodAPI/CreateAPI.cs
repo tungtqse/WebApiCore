@@ -73,7 +73,7 @@ namespace WebApiCore.ApplicationAPI.APIs.BloodAPI
 
                     context.Set<Blood>().Add(blood);
 
-                    context.SaveChanges();
+                    scope.SaveChanges();
                 }
 
                 result.IsSuccessful = isValid;

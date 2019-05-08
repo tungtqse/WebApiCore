@@ -92,7 +92,7 @@ namespace WebApiCore.ApplicationAPI.APIs.UserProfiles
                         var item = context.Set<DataModel.Models.UserProfile>().Where(f => f.Id == message.Id).FirstOrDefault();
                         Mapper.Map(message,item);
                         isValid = true;
-                        context.SaveChanges();
+                        scope.SaveChanges();
                     }
                     else
                     {
